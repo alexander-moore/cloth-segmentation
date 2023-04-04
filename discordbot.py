@@ -14,7 +14,7 @@ import torchvision.transforms as transforms
 import bot_utils as butils
 import matplotlib.pyplot as plt
 
-openai.api_key = "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"
+openai.api_key = torch.load('openai_key.txt')
 
 intents = discord.Intents.all()
 
@@ -162,4 +162,5 @@ async def steal(ctx, *, user_input):
     else:
         await ctx.channel.send(f"Did not find an image")
 
-bot.run('MTA3MjMzNDg1MTIwNzg3NjY2OA.Gdavkm.BhByEDQiTp6S-GERlM4Ys28XanGQtV7ROe7XeE')
+bot_key = torch.load('discord_bot_key.txt')
+bot.run()
