@@ -270,10 +270,13 @@ def str_to_code(string):
 def add_item_to_database(img, name, price):
     # Parse the input
     image_tensor, mask_tensor = forward_image(img)
-    print('output array shape in parse_image', image_tensor.shape, mask_tensor.shape)
+    print('output array shape in parse_image: image_tensor.shape, mask_tensor.shape', image_tensor.shape, mask_tensor.shape)
     obj_ids = np.unique(mask_tensor)[1:]
 
-    print(obj_ids, mask_tensor.shape)
+    print(type(mask_tensor))
+
+    print('obj_ids, mask_tensor.shape', obj_ids, mask_tensor.shape)
+    print(type(obj_ids), type(obj_ids[0]))
     masks = torch.BoolTensor(mask_tensor == obj_ids[:,None, None])
     boxes = masks_to_boxes(masks)
     
