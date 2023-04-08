@@ -149,7 +149,7 @@ async def steal(ctx, *, user_input):
             
 
             # Parse input image into list of tensor sub-images
-            subimage_list, id_list, _ = butils.image_to_subims(image, mode='all', debug = debug)
+            subimage_list, id_list, boxims = butils.image_to_subims(image, mode='all', debug = debug)
             print('Validating Meme:')
             print('subimage_list', len(subimage_list))
             print('id_list', id_list)
@@ -169,7 +169,7 @@ async def steal(ctx, *, user_input):
                     await ctx.channel.send(f'Subimage item {key_map[id_]}:',file = file)
 
             # Get nearest validation set items for subimages
-            imgs, boxims, temps, names, prices = butils.nearest_items(subimage_list, id_list)
+            imgs, boxims, temps, names, prices = butils.nearest_items(boxims, id_list)
 
             if debug:
                 await ctx.channel.send("Found the nearest paired items:")
@@ -185,12 +185,13 @@ async def steal(ctx, *, user_input):
 
             # Build a meme with these images, prices, names, and id's
             
-
             print('imgs', len(imgs), type(imgs[0]))
+            print('boxims', len(boxims), type(boxims[0]))
             print('prices', prices)
             print('names', names)
 
-            meme_image, meme_dir = butils.draw_meme(image, box_ims, names, prices, id_list)
+            #meme_image, meme_dir = butils.draw_meme(image, box_ims, names, prices, id_list)
+            meme_image, meme_dir = butils.draw_meme(image, boxims, names, prices, id_list)
 
             file_obj = io.BytesIO()
             meme_image.save(file_obj, 'PNG')

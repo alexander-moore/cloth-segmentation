@@ -129,6 +129,7 @@ def image_to_subims(img, mode, debug = False):
         code = code+1 # this is sketchy and should probably be reconfigured. we want the max OTHER THAN background
         
         temp = image_tensor.clone()
+        boxim = image_tensor.clone()
 
         temp[:,mask!=code] = 0
 
@@ -147,13 +148,14 @@ def image_to_subims(img, mode, debug = False):
                 ymax = int(boxes[obind, 3])
 
         temp = temp[:, ymin:ymax, xmin:xmax]
+        boxim = boxim[:, ymin:ymax, xmin:xmax]
         
         if False:
             plt.imshow(temp.permute(1,2,0))
             plt.title('Cropped image')
             plt.show()
 
-        return to_image(temp), code, key_map[code]
+        return to_image(temp), to_image(boxim), code, key_map[code]
 
     elif mode == 'all':
         transforms.Resize((mask.shape[0],mask.shape[1]))(image_tensor)
@@ -207,9 +209,9 @@ def add_item_to_database(img, mode, name, price = 100, debug = False):
 
         for i, (subim, subid, boxim) in enumerate(zip(subims, subids, boxims)):
             # Look in "database" directory and find the number of items:
-            trymkdir(f'database2/{key_map[subid]}/') # make sure item type directory exists
+            trymkdir(f'database3/{key_map[subid]}/') # make sure item type directory exists
 
-            item_path = f'database2/{key_map[subid]}/{name}/'
+            item_path = f'database3/{key_map[subid]}/{name}/'
             trymkdir(item_path) # Make sure database directory exists
 
             img_emb = img_embs[i]
@@ -217,7 +219,7 @@ def add_item_to_database(img, mode, name, price = 100, debug = False):
             # Make the database directory for this item under the code subdir
             img.save(f'{item_path}{name}_full_jpg.jpg')# Original image - pil
             subim.save(f'{item_path}{name}_subim_jpg.jpg')# Scanned item cutout - pil
-            boxim.save(f'{item_path}{name}_box_im.jpg')
+            boxim.save(f'{item_path}boxim.jpg')
             #torch.save(pil, f'{newdir}img.pt') 
             #torch.save(temp, f'{newdir}temp.pt') 
             torch.save(img_emb, f'{item_path}emb.pt') # Embedding of image - vector
@@ -268,13 +270,14 @@ def nearest_items(subims, subids):
     temps = []
     boxims = []
 
+    print('nearest received', len(subims))
     subim_embs = embed_image(subims)
 
     for i, (subid, subim) in enumerate(zip(subids, subims)):
         
 
-        trymkdir(f'database2/{key_map[subid]}/')
-        dir_list = os.listdir(f'database2/{key_map[subid]}/')
+        trymkdir(f'database3/{key_map[subid]}/')
+        dir_list = os.listdir(f'database3/{key_map[subid]}/')
         if len(dir_list) > 0:
             subim_emb = subim_embs[i]
 
@@ -284,7 +287,7 @@ def nearest_items(subims, subids):
             for i, val_dir in enumerate(dir_list):
                 # While iterating, take distances
                 print(i, val_dir)
-                emb = torch.load(f'database2/{key_map[subid]}/{val_dir}/emb.pt')
+                emb = torch.load(f'database3/{key_map[subid]}/{val_dir}/emb.pt')
 
                 #distance = cosine_similarity(subim_emb, emb)
 
@@ -299,12 +302,13 @@ def nearest_items(subims, subids):
                     print('new min is', min_dist, min_ind)
 
             # Now we have the nearest validation element for this subim
-            imgs.append(Image.open(f'database2/{key_map[subid]}/{dir_list[min_ind]}/{dir_list[min_ind]}_full_jpg.jpg'))
-            boxims.append(Image.open(f'database2/{key_map[subid]}/{dir_list[min_ind]}/{dir_list[min_ind]}_box_im.jpg'))
-            temps.append(Image.open(f'database2/{key_map[subid]}/{dir_list[min_ind]}/{dir_list[min_ind]}_subim_jpg.jpg'))
-            names.append(torch.load(f'database2/{key_map[subid]}/{dir_list[min_ind]}/item_name.pt'))
-            prices.append(torch.load(f'database2/{key_map[subid]}/{dir_list[min_ind]}/price.pt'))
+            imgs.append(Image.open(f'database3/{key_map[subid]}/{dir_list[min_ind]}/{dir_list[min_ind]}_full_jpg.jpg'))
+            boxims.append(Image.open(f'database3/{key_map[subid]}/{dir_list[min_ind]}/boxim.jpg'))
+            temps.append(Image.open(f'database3/{key_map[subid]}/{dir_list[min_ind]}/{dir_list[min_ind]}_subim_jpg.jpg'))
+            names.append(torch.load(f'database3/{key_map[subid]}/{dir_list[min_ind]}/item_name.pt'))
+            prices.append(torch.load(f'database3/{key_map[subid]}/{dir_list[min_ind]}/price.pt'))
 
+    print('returning boxims', len(boxims))
     return imgs, boxims, temps, names, prices
 
 def draw_meme(tar_img, imgs, names, prices, id_list):
